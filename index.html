@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loyola 14U Boys · JO Game-Day Planner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="Every game, pool, and start time for the Loyola 14U boys at the 2026 Junior Olympics — tap results as they happen and see exactly where to drive next.">
+<!-- Link-preview card. NOTE: once the site is hosted, replace og:image/og:url
+     with the full https:// address — most apps ignore relative image paths. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Loyola 14U Boys · JO Game-Day Planner">
+<meta property="og:description" content="Every game, pool, and start time for the 2026 Junior Olympics, July 23–26. Tap results as they happen and see exactly where to drive next.">
+<meta property="og:image" content="share.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Loyola 14U Boys · JO Game-Day Planner">
+<meta name="twitter:description" content="Every game, pool, and start time for the 2026 Junior Olympics, July 23–26.">
+<meta name="twitter:image" content="share.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">USA Water Polo Junior Olympics · July 23–26, 2026</p>
+  <h1>Loyola <span class="num">14U</span> Boys<br>Game-Day Planner</h1>
+  <p class="lede">Your whole weekend, one scroll. As each result comes in, tap it below. The planner reroutes and tells you exactly <b>what time the next game is, which pool it&rsquo;s at, and how to get there</b>. Every choice shows where it leads before you tap it, all the way to a final placement on Sunday.</p>
+  <div class="pod">
+    <span class="chip">Thursday starts at <b>Portola HS</b></span>
+    <span class="chip">First game <b>Thu 7:00 AM</b></span>
+  </div>
+  <div class="lane" aria-hidden="true"></div>
+</header>
+
+<section>
+  <h2 class="sec"><span class="tick">01</span> Your weekend plan</h2>
+  <div class="planbar">
+    <p class="secsub">Times are <b>start times</b> plan to have your player on deck 60 minutes early for warm-up. Changed your mind about a result? Tap a different answer and everything below reroutes.</p>
+    <button class="reset" id="resetbtn" type="button">&#8634; Start over</button>
+  </div>
+  <div id="plan"></div>
+</section>
+
+<section>
+  <h2 class="sec"><span class="tick">02</span> The pools</h2>
+  <p class="secsub">Every pool the team could play at this weekend. Tap directions the night before and save the route.</p>
+  <div class="venues" id="venues"></div>
+</section>
+</div>
+
+<script>
+/* ---------------- venues ---------------- */
+var VEN={
+  POR:{short:'Portola HS', name:'Portola High School — Pool 2', addr:'1001 Cadence, Irvine, CA 92618'},
+  SAD:{short:'Saddleback', name:'Saddleback College — Pool 1', addr:'28000 Marguerite Pkwy, Mission Viejo, CA 92692'},
+  SC2:{short:'Saddleback', name:'Saddleback College — Pool 2', addr:'28000 Marguerite Pkwy, Mission Viejo, CA 92692'},
+  VP: {short:'Villa Park', name:'Villa Park High School', addr:'18042 Taft Ave, Villa Park, CA 92861'},
+  TRA:{short:'Trabuco', name:'Trabuco Hills High School', addr:'27501 Mustang Run, Mission Viejo, CA 92691'},
+  ANA:{short:'Anaheim', name:'Anaheim High School', addr:'811 W Lincoln Ave, Anaheim, CA 92805'}
+};
+var VDIR=[
+  ['POR','Portola High School (Pool 2)','Thursday & Sunday'],
+  ['SAD','Saddleback College (Pools 1 & 2)','Friday & Sunday'],
+  ['VP','Villa Park High School','Friday – Sunday'],
+  ['TRA','Trabuco Hills High School','Friday – Sunday'],
+  ['ANA','Anaheim High School','Saturday']
+];
+function mapsUrl(v){return 'https://maps.google.com/?q='+encodeURIComponent(VEN[v].name.split(' — ')[0]+', '+VEN[v].addr);}
+
+var DAY={thu:{lbl:'Thursday',date:'July 23'},fri:{lbl:'Friday',date:'July 24'},sat:{lbl:'Saturday',date:'July 25'},sun:{lbl:'Sunday',date:'July 26'}};
+var DSHORT={thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+
+/* ---------------- every bracket game Loyola can reach ----------------
+   From the official schedule. w/dk = who holds the white/dark cap slot;
+   W/L = where the winner/loser goes: {g:game, s:side} or F:[win,lose] finish. */
+var GAMES={
+  /* Friday evening play-ins */
+  85:{d:'fri',t:'6:40 PM',v:'SAD',r:'Evening play-in',w:'Group O 3rd',dk:'Group U 1st',W:{g:89,s:'d'},L:{g:105,s:'w'}},
+  86:{d:'fri',t:'6:40 PM',v:'VP', r:'Evening play-in',w:'Group P 3rd',dk:'Group T 1st',W:{g:95,s:'d'},L:{g:99,s:'w'}},
+  87:{d:'fri',t:'7:30 PM',v:'SAD',r:'Evening play-in',w:'Group M 3rd',dk:'Group S 1st',W:{g:98,s:'d'},L:{g:102,s:'w'}},
+  /* Saturday — Nickel (places 1–20) */
+  89:{d:'sat',t:'8:00 AM',v:'ANA',r:'Places 5–12',w:'Group P 2nd',dk:'Winner Gm 85',W:{g:107,s:'w'},L:{g:113,s:'d'}},
+  92:{d:'sat',t:'9:00 AM',v:'ANA',r:'Places 5–12',w:'Group M 2nd',dk:'Winner Gm 88',W:{g:107,s:'d'},L:{g:113,s:'w'}},
+  95:{d:'sat',t:'10:00 AM',v:'ANA',r:'Places 5–12',w:'Group O 2nd',dk:'Winner Gm 86',W:{g:110,s:'w'},L:{g:116,s:'d'}},
+  98:{d:'sat',t:'11:00 AM',v:'ANA',r:'Places 5–12',w:'Group N 2nd',dk:'Winner Gm 87',W:{g:110,s:'d'},L:{g:116,s:'w'}},
+  104:{d:'sat',t:'1:00 PM',v:'ANA',r:'Places 1–4',w:'Group M 1st',dk:'Group P 1st',W:{g:131,s:'w'},L:{g:122,s:'w'}},
+  107:{d:'sat',t:'2:00 PM',v:'ANA',r:'Places 5–8',w:'Winner Gm 89',dk:'Winner Gm 92',W:{g:119,s:'d'},L:{g:140,s:'w'}},
+  110:{d:'sat',t:'3:00 PM',v:'ANA',r:'Places 5–8',w:'Winner Gm 95',dk:'Winner Gm 98',W:{g:122,s:'d'},L:{g:140,s:'d'}},
+  113:{d:'sat',t:'4:00 PM',v:'ANA',r:'Places 9–12',w:'Loser Gm 92',dk:'Loser Gm 89',W:{g:138,s:'w'},L:{g:137,s:'w'}},
+  116:{d:'sat',t:'5:00 PM',v:'ANA',r:'Places 9–12',w:'Loser Gm 98',dk:'Loser Gm 95',W:{g:138,s:'d'},L:{g:137,s:'d'}},
+  119:{d:'sat',t:'6:00 PM',v:'ANA',r:'Play-in to semifinal',w:'Loser Gm 101',dk:'Winner Gm 107',W:{g:131,s:'d'},L:{g:141,s:'w'}},
+  122:{d:'sat',t:'7:00 PM',v:'ANA',r:'Play-in to semifinal',w:'Loser Gm 104',dk:'Winner Gm 110',W:{g:132,s:'d'},L:{g:141,s:'d'}},
+  96:{d:'sat',t:'10:00 AM',v:'VP',r:'Places 13–20',w:'Loser Gm 88',dk:'Group U 2nd',W:{g:114,s:'w'},L:{g:117,s:'d'}},
+  99:{d:'sat',t:'11:00 AM',v:'VP',r:'Places 13–20',w:'Loser Gm 86',dk:'Group S 2nd',W:{g:114,s:'d'},L:{g:117,s:'w'}},
+  102:{d:'sat',t:'12:00 PM',v:'VP',r:'Places 13–20',w:'Loser Gm 87',dk:'Group T 2nd',W:{g:120,s:'w'},L:{g:123,s:'d'}},
+  105:{d:'sat',t:'1:00 PM',v:'VP',r:'Places 13–20',w:'Loser Gm 85',dk:'Group R 2nd',W:{g:120,s:'d'},L:{g:123,s:'w'}},
+  114:{d:'sat',t:'4:00 PM',v:'VP',r:'Places 13–16 semi',w:'Winner Gm 96',dk:'Winner Gm 99',W:{g:135,s:'w'},L:{g:134,s:'w'}},
+  117:{d:'sat',t:'5:00 PM',v:'VP',r:'Places 17–20 semi',w:'Loser Gm 99',dk:'Loser Gm 96',W:{g:129,s:'w'},L:{g:128,s:'w'}},
+  120:{d:'sat',t:'6:00 PM',v:'VP',r:'Places 13–16 semi',w:'Winner Gm 102',dk:'Winner Gm 105',W:{g:135,s:'d'},L:{g:134,s:'d'}},
+  123:{d:'sat',t:'7:00 PM',v:'VP',r:'Places 17–20 semi',w:'Loser Gm 105',dk:'Loser Gm 102',W:{g:129,s:'d'},L:{g:128,s:'d'}},
+  /* Sunday — Nickel placement */
+  131:{d:'sun',t:'7:00 AM',v:'VP',r:'Semifinal',w:'Winner Gm 104',dk:'Winner Gm 119',W:{g:146,s:'w'},L:{g:145,s:'w'}},
+  132:{d:'sun',t:'8:00 AM',v:'VP',r:'Semifinal',w:'Winner Gm 101',dk:'Winner Gm 122',W:{g:146,s:'d'},L:{g:145,s:'d'}},
+  146:{d:'sun',t:'12:00 PM',v:'VP',r:'Championship',w:'Winner Gm 131',dk:'Winner Gm 132',F:['1st of 36 — Nickel champions!','2nd of 36']},
+  145:{d:'sun',t:'11:00 AM',v:'VP',r:'3rd-place game',w:'Loser Gm 131',dk:'Loser Gm 132',F:['3rd of 36','4th of 36']},
+  141:{d:'sun',t:'10:00 AM',v:'VP',r:'5th-place game',w:'Loser Gm 119',dk:'Loser Gm 122',F:['5th of 36','6th of 36']},
+  140:{d:'sun',t:'9:00 AM',v:'VP',r:'7th-place game',w:'Loser Gm 107',dk:'Loser Gm 110',F:['7th of 36','8th of 36']},
+  138:{d:'sun',t:'10:00 AM',v:'TRA',r:'9th-place game',w:'Winner Gm 113',dk:'Winner Gm 116',F:['9th of 36','10th of 36']},
+  137:{d:'sun',t:'11:00 AM',v:'TRA',r:'11th-place game',w:'Loser Gm 113',dk:'Loser Gm 116',F:['11th of 36','12th of 36']},
+  135:{d:'sun',t:'10:00 AM',v:'SC2',r:'13th-place game',w:'Winner Gm 114',dk:'Winner Gm 120',F:['13th of 36','14th of 36']},
+  134:{d:'sun',t:'11:00 AM',v:'SC2',r:'15th-place game',w:'Loser Gm 114',dk:'Loser Gm 120',F:['15th of 36','16th of 36']},
+  129:{d:'sun',t:'8:00 AM',v:'TRA',r:'17th-place game',w:'Winner Gm 117',dk:'Winner Gm 123',F:['17th of 36','18th of 36']},
+  128:{d:'sun',t:'9:00 AM',v:'TRA',r:'19th-place game',w:'Loser Gm 117',dk:'Loser Gm 123',F:['19th of 36','20th of 36']},
+  /* Saturday — Copper (places 25–36) */
+  97:{d:'sat',t:'10:00 AM',v:'TRA',r:'Copper bracket',w:'Group M 2nd',dk:'Group N 3rd',W:{g:109,s:'d'},L:{g:115,s:'w'}},
+  100:{d:'sat',t:'11:00 AM',v:'TRA',r:'Copper bracket',w:'Group N 2nd',dk:'Group M 3rd',W:{g:112,s:'d'},L:{g:118,s:'w'}},
+  103:{d:'sat',t:'12:00 PM',v:'TRA',r:'Copper places 1–4',w:'Group N 1st',dk:'Group O 1st',W:{g:130,s:'w'},L:{g:121,s:'w'}},
+  106:{d:'sat',t:'1:00 PM',v:'TRA',r:'Copper places 1–4',w:'Group M 1st',dk:'Group P 1st',W:{g:127,s:'w'},L:{g:124,s:'w'}},
+  109:{d:'sat',t:'2:00 PM',v:'TRA',r:'Copper bracket',w:'Winner Gm 91',dk:'Winner Gm 97',W:{g:121,s:'d'},L:{g:142,s:'w'}},
+  112:{d:'sat',t:'3:00 PM',v:'TRA',r:'Copper bracket',w:'Winner Gm 94',dk:'Winner Gm 100',W:{g:124,s:'d'},L:{g:142,s:'d'}},
+  115:{d:'sat',t:'4:00 PM',v:'TRA',r:'Copper bracket',w:'Loser Gm 97',dk:'Loser Gm 91',W:{g:133,s:'w'},L:{g:136,s:'w'}},
+  118:{d:'sat',t:'5:00 PM',v:'TRA',r:'Copper bracket',w:'Loser Gm 100',dk:'Loser Gm 94',W:{g:133,s:'d'},L:{g:136,s:'d'}},
+  121:{d:'sat',t:'6:00 PM',v:'TRA',r:'Copper play-in',w:'Loser Gm 103',dk:'Winner Gm 109',W:{g:127,s:'d'},L:{g:139,s:'w'}},
+  124:{d:'sat',t:'7:00 PM',v:'TRA',r:'Copper play-in',w:'Loser Gm 106',dk:'Winner Gm 112',W:{g:130,s:'d'},L:{g:139,s:'d'}},
+  /* Sunday — Copper placement */
+  127:{d:'sun',t:'7:00 AM',v:'POR',r:'Copper semifinal',w:'Winner Gm 106',dk:'Winner Gm 121',W:{g:144,s:'w'},L:{g:143,s:'w'}},
+  130:{d:'sun',t:'8:00 AM',v:'POR',r:'Copper semifinal',w:'Winner Gm 103',dk:'Winner Gm 124',W:{g:144,s:'d'},L:{g:143,s:'d'}},
+  144:{d:'sun',t:'12:00 PM',v:'POR',r:'Copper championship',w:'Winner Gm 127',dk:'Winner Gm 130',F:['25th of 36 — Copper champions!','26th of 36']},
+  143:{d:'sun',t:'11:00 AM',v:'POR',r:'Copper 3rd-place game',w:'Loser Gm 127',dk:'Loser Gm 130',F:['27th of 36','28th of 36']},
+  139:{d:'sun',t:'10:00 AM',v:'POR',r:'Copper 5th-place game',w:'Loser Gm 121',dk:'Loser Gm 124',F:['29th of 36','30th of 36']},
+  142:{d:'sun',t:'9:00 AM',v:'POR',r:'Copper 7th-place game',w:'Loser Gm 109',dk:'Loser Gm 112',F:['31st of 36','32nd of 36']},
+  133:{d:'sun',t:'8:00 AM',v:'SC2',r:'Copper 9th-place game',w:'Winner Gm 115',dk:'Winner Gm 118',F:['33rd of 36','34th of 36']},
+  136:{d:'sun',t:'9:00 AM',v:'SC2',r:'Copper 11th-place game',w:'Loser Gm 115',dk:'Loser Gm 118',F:['35th of 36','36th of 36']}
+};
+
+/* ---------------- fixed opening path + Friday groups + 21-24 round robin ---------------- */
+var N={
+  T3:{day:'thu',t:'7:00 AM',v:'POR',gm:3,who:'Group game',opp:'Sand Canyon',cap:'dark',kids:[[null,'T15']]},
+  T15:{day:'thu',t:'10:20 AM',v:'POR',gm:15,who:'Group game',opp:'CCU White',cap:'dark',
+    q:'How does Thursday morning go?',grp:true,
+    kids:[['Win 2','F54','Win both'],['1–1','T39','Win 1, lose 1'],['Lose 2','T42','Lose both']]},
+  T39:{day:'thu',t:'5:50 PM',v:'POR',gm:39,who:'Crossover game',opp:'3rd of Group J',cap:'white',
+    q:'Tonight&rsquo;s crossover (Gm 39) — win or lose?',
+    kids:[['Win','F51','Win'],['Lose','F56','Lose']]},
+  T42:{day:'thu',t:'6:40 PM',v:'POR',gm:42,who:'Crossover game',opp:'2nd of Group J',cap:'dark',
+    q:'Tonight&rsquo;s crossover (Gm 42) — win or lose?',
+    kids:[['Win','F52','Win'],['Lose','F53','Lose']]},
+
+  /* win both Thu → Nickel Group M */
+  F54:{day:'fri',t:'8:40 AM',v:'SAD',gm:54,who:'Group game 1',opp:'1st of Group H',cap:'dark',kids:[[null,'F66']]},
+  F66:{day:'fri',t:'12:00 PM',v:'SAD',gm:66,who:'Group game 2',opp:'1st of Group A',cap:'dark',
+    q:'How do the two Friday games go?',grp:true,
+    kids:[['Win 2','G104w','Win both'],['1–1','G92w','Win 1, lose 1'],['Lose 2','G87w','Lose both']]},
+
+  /* 1-1 Thu, win Gm 39 → Nickel Group U */
+  F51:{day:'fri',t:'7:50 AM',v:'SAD',gm:51,who:'Group game 1',opp:'Winner Gm 38',cap:'white',kids:[[null,'F63']]},
+  F63:{day:'fri',t:'11:10 AM',v:'SAD',gm:63,who:'Group game 2',opp:'Winner Gm 37',cap:'white',
+    q:'How do the two Friday games go?',grp:true,
+    kids:[['Win 2','G85d','Win both'],['1–1','G96d','Win 1, lose 1'],['Lose 2','R93','Lose both']]},
+
+  /* 1-1 Thu, lose Gm 39 → Copper Group N */
+  F56:{day:'fri',t:'7:50 AM',v:'TRA',gm:56,who:'Group game 1',opp:'Loser Gm 38',cap:'dark',kids:[[null,'F68']]},
+  F68:{day:'fri',t:'11:10 AM',v:'TRA',gm:68,who:'Group game 2',opp:'Loser Gm 37',cap:'dark',
+    q:'How do the two Friday games go?',grp:true,
+    kids:[['Win 2','G103w','Win both'],['1–1','G100w','Win 1, lose 1'],['Lose 2','G97d','Lose both']]},
+
+  /* lose both Thu, win Gm 42 → Nickel Group T */
+  F52:{day:'fri',t:'7:50 AM',v:'VP',gm:52,who:'Group game 1',opp:'Winner Gm 41',cap:'white',kids:[[null,'F64']]},
+  F64:{day:'fri',t:'11:10 AM',v:'VP',gm:64,who:'Group game 2',opp:'Winner Gm 40',cap:'white',
+    q:'How do the two Friday games go?',grp:true,
+    kids:[['Win 2','G86d','Win both'],['1–1','G102d','Win 1, lose 1'],['Lose 2','R90','Lose both']]},
+
+  /* lose both Thu, lose Gm 42 → Copper Group M */
+  F53:{day:'fri',t:'7:00 AM',v:'TRA',gm:53,who:'Group game 1',opp:'Loser Gm 41',cap:'dark',kids:[[null,'F65']]},
+  F65:{day:'fri',t:'10:20 AM',v:'TRA',gm:65,who:'Group game 2',opp:'Loser Gm 40',cap:'dark',
+    q:'How do the two Friday games go?',grp:true,
+    kids:[['Win 2','G106w','Win both'],['1–1','G97w','Win 1, lose 1'],['Lose 2','G100d','Lose both']]},
+
+  /* places 21–24 round robin — all three games happen regardless of results */
+  R90:{day:'sat',t:'8:00 AM',v:'VP',gm:90,who:'Places 21–24 round robin',opp:'Group S 3rd',cap:'white',kids:[[null,'R111']]},
+  R111:{day:'sat',t:'3:00 PM',v:'VP',gm:111,who:'Places 21–24 round robin',opp:'Group R 3rd',cap:'white',kids:[[null,'R125T']]},
+  R125T:{day:'sun',t:'7:00 AM',v:'TRA',gm:125,who:'Places 21–24 round robin',opp:'Group U 3rd',cap:'white',kids:[[null,'XRRT']]},
+  XRRT:{day:'sun',fin:'21st–24th of 36 — set by round-robin record'},
+  R93:{day:'sat',t:'9:00 AM',v:'VP',gm:93,who:'Places 21–24 round robin',opp:'Group R 3rd',cap:'white',kids:[[null,'R108']]},
+  R108:{day:'sat',t:'2:00 PM',v:'VP',gm:108,who:'Places 21–24 round robin',opp:'Group S 3rd',cap:'white',kids:[[null,'R125U']]},
+  R125U:{day:'sun',t:'7:00 AM',v:'TRA',gm:125,who:'Places 21–24 round robin',opp:'Group T 3rd',cap:'dark',kids:[[null,'XRRU']]},
+  XRRU:{day:'sun',fin:'21st–24th of 36 — set by round-robin record'}
+};
+
+/* ---------------- generate every reachable bracket path ----------------
+   A game slot (e.g. "winner of Gm 131") can be reached along different
+   routes, so every occurrence gets its own node — a strict tree, which
+   keeps rewinding ("tap an earlier answer") unambiguous. */
+var seq=0;
+function makeG(gm,side){
+  var id='G'+gm+side+'n'+(seq++);
+  var g=GAMES[gm];
+  var node={day:g.d,t:g.t,v:g.v,gm:gm,who:g.r,cap:side==='w'?'white':'dark',opp:side==='w'?g.dk:g.w};
+  N[id]=node;
+  node.q='Gm '+gm+' ('+g.r+') — win or lose?';
+  if(g.F){
+    var wf='X'+(seq++),lf='X'+(seq++);
+    N[wf]={day:g.d,fin:g.F[0]};
+    N[lf]={day:g.d,fin:g.F[1]};
+    node.kids=[['Win',wf,'Win'],['Lose',lf,'Lose']];
+  }else{
+    node.kids=[['Win',makeG(g.W.g,g.W.s),'Win'],['Lose',makeG(g.L.g,g.L.s),'Lose']];
+  }
+  return id;
+}
+Object.keys(N).slice().forEach(function(id){
+  (N[id].kids||[]).forEach(function(k){
+    var m=/^G(\d+)(w|d)$/.exec(k[1]);
+    if(m)k[1]=makeG(+m[1],m[2]);
+  });
+});
+
+var PARENT={};
+for(var pid in N){(N[pid].kids||[]).forEach(function(k){PARENT[k[1]]=pid;});}
+
+/* ---------------- state ---------------- */
+var path=[];
+function tip(){return path[path.length-1];}
+function autoExtend(){
+  var n=N[tip()];
+  while(n.kids&&n.kids.length===1){path.push(n.kids[0][1]);n=N[tip()];}
+}
+function resetPath(){path=['T3'];autoExtend();}
+function chainTo(id){
+  var out=[],cur=id;
+  while(cur){out.unshift(cur);cur=PARENT[cur];}
+  return out;
+}
+function chooseAt(id,i){
+  path=chainTo(id);
+  path.push(N[id].kids[i][1]);
+  autoExtend();
+  render();
+  requestAnimationFrame(function(){
+    var el=document.querySelector('.ask.open')||document.querySelector('.finish');
+    if(el&&!matchMedia('(prefers-reduced-motion: reduce)').matches)
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+
+/* ---------------- plan rendering ---------------- */
+function parseT(t){
+  var parts=t.split(' '),hm=parts[0].split(':'),h=+hm[0];
+  if(parts[1]==='PM'&&h!==12)h+=12;
+  return h*60+(+hm[1]);
+}
+function capTxt(n){return n.cap?(' · '+n.cap+' caps'):'';}
+function gameRow(id){
+  var n=N[id],tp=n.t.split(' ');
+  return '<div class="g"><div class="gt">'+tp[0]+'<span>'+tp[1]+'</span></div>'+
+    '<div class="gi"><div class="gv">'+VEN[n.v].name+
+    ' <a href="'+mapsUrl(n.v)+'" target="_blank" rel="noopener">Directions &#8599;</a></div>'+
+    '<div class="gmeta">Gm '+n.gm+' · '+n.who+(n.opp?' · vs '+n.opp:'')+capTxt(n)+'</div></div></div>';
+}
+function finRow(id){
+  return '<div class="finish"><span>Projected finish</span><b>'+N[id].fin+'</b></div>';
+}
+function askHTML(id){
+  var n=N[id];
+  var chosen=null;
+  var pi=path.indexOf(id);
+  if(pi>-1&&pi<path.length-1)chosen=path[pi+1];
+  var h='<div class="ask'+(chosen?' answered':' open')+'"><p>'+n.q+'</p>';
+  if(n.grp)h+='<p class="asknote">A 1–1 record usually lands 2nd, but a three-way tie can shuffle the order on goal difference.</p>';
+  h+='<div class="opts">';
+  n.kids.forEach(function(k,i){
+    var c=N[k[1]];
+    var cls=chosen?(chosen===k[1]?'opt sel':'opt off'):'opt';
+    var prev=c.fin?('&#8594; finish: '+c.fin):('&#8594; '+DSHORT[c.day]+' '+c.t+' · '+VEN[c.v].short);
+    h+='<button type="button" class="'+cls+'" onclick="chooseAt(\''+id+'\','+i+')">'+
+       '<span class="ol">'+k[2]+'</span><span class="op">'+prev+'</span></button>';
+  });
+  return h+'</div></div>';
+}
+function ghostHTML(d){
+  var des=[];
+  (function walk(id){
+    var n=N[id];
+    if(id!==tip()&&n.day===d&&n.gm)des.push(id);
+    (n.kids||[]).forEach(function(k){walk(k[1]);});
+  })(tip());
+  if(!des.length)return '';
+  var first=des.filter(function(i){return N[PARENT[i]].day!==d;});
+  if(!first.length)first=des;
+  var vens=[],mins=1e9,maxs=-1,minT='',maxT='';
+  first.forEach(function(i){
+    var n=N[i];
+    var vn=VEN[n.v].name.split(' — ')[0];
+    if(vens.indexOf(vn)<0)vens.push(vn);
+    var m=parseT(n.t);
+    if(m<mins){mins=m;minT=n.t;}
+    if(m>maxs){maxs=m;maxT=n.t;}
+  });
+  var vtxt=vens.length===1?vens[0]:vens.slice(0,-1).join(', ')+' or '+vens[vens.length-1];
+  var ttxt=minT===maxT?('at '+minT):('between '+minT+' and '+maxT);
+  return '<div class="ghost"><b>Not set yet.</b> First game will be at <b>'+vtxt+'</b>, starting '+ttxt+'. Answer the questions above and it locks in.</div>';
+}
+function planHTML(){
+  var h='';
+  ['thu','fri','sat','sun'].forEach(function(d){
+    var games=path.filter(function(id){return N[id].day===d;});
+    h+='<div class="day'+(d==='sun'?' sunday':'')+'"><h3>'+DAY[d].lbl+' <span>· '+DAY[d].date+'</span></h3>';
+    var rows=games.filter(function(id){return !N[id].fin;});
+    if(rows.length)h+='<div class="tl">';
+    games.forEach(function(id){
+      if(N[id].fin){h+=(rows.length?'</div>':'')+finRow(id);rows=[];return;}
+      h+=gameRow(id);
+      if(N[id].kids&&N[id].kids.length>1)h+=askHTML(id);
+    });
+    if(rows.length)h+='</div>';
+    if(!games.length)h+=ghostHTML(d);
+    h+='</div>';
+  });
+  return h;
+}
+function render(){document.getElementById('plan').innerHTML=planHTML();}
+
+document.getElementById('resetbtn').addEventListener('click',function(){
+  resetPath();render();window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* venues */
+var vh='';
+VDIR.forEach(function(e){
+  vh+='<div class="venue"><h4>'+e[1]+'</h4><p class="vdays">'+e[2]+'</p>'+
+      '<p class="vaddr">'+VEN[e[0]].addr+'</p>'+
+      '<a class="vlink" href="'+mapsUrl(e[0])+'" target="_blank" rel="noopener">Get directions &#8599;</a></div>';
+});
+document.getElementById('venues').innerHTML=vh;
+
+resetPath();render();
+</script>
+</body>
+</html>
